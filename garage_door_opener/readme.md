@@ -50,7 +50,7 @@ However I reversed the Reed switch logic and location so that when the magnet co
 
 #### Hubitat Website:
 
-1.  Add the Shelly Garage Door Opener [source code](https://https://raw.githubusercontent.com/mircolino/shelly/main/garage_door_opener/driver.groovy) to the Hubitat "Drivers Code" page.
+1.  Add the Shelly Garage Door Opener [source code](https://raw.githubusercontent.com/mircolino/shelly/main/garage_door_opener/driver.groovy) to the Hubitat "Drivers Code" page.
 
 2.  Create a new Virtual Device, select type: "Shelly Garage Door Opener" and press &lt;Save Device&gt;:
 
