@@ -27,7 +27,7 @@ However I reversed the Reed switch logic and location so that when the magnet co
 1.  Set the Shelly input voltage to 12V with the dedicated jumper.
 2.  Wire the Shelly switch as follow:
 
-    <img src="https://github.com/mircolino/shelly/raw/main/garage_door_opener/images/01_wiring.png" width="30%" height="30%">
+    <img src="https://github.com/mircolino/shelly/raw/main/garage_door_opener/images/01_wiring.png" width="50%" height="50%">
 
 3.  Install the Reed switch in a location where the magnet is in proximity of the switch when the garage door is fully closed.
 
@@ -35,18 +35,18 @@ However I reversed the Reed switch logic and location so that when the magnet co
 
 1.  Set the Shelly button type to "detached" so that the internal relay and the external Reed switch will have independent states:
 
-    <img src="https://github.com/mircolino/shelly/raw/main/garage_door_opener/images/02_detached.png" width="20%" height="20%">
+    <img src="https://github.com/mircolino/shelly/raw/main/garage_door_opener/images/02_detached.png" width="40%" height="40%">
 
 2.  Add a 1 sec auto-off timer to emulate pressing the garage physical button:
 
-    <img src="https://github.com/mircolino/shelly/raw/main/garage_door_opener/images/03_timer.png" width="20%" height="20%">
+    <img src="https://github.com/mircolino/shelly/raw/main/garage_door_opener/images/03_timer.png" width="40%" height="40%">
 
 3.  Add Hubitat callbacks so that the Shelly switch can notify Hubitat when either the internal relay or the external Reed switch changes state:
 
-    <img src="https://github.com/mircolino/shelly/raw/main/garage_door_opener/images/04_contact_on.png" width="20%" height="20%"><br>
-    <img src="https://github.com/mircolino/shelly/raw/main/garage_door_opener/images/05_contact_off.png" width="20%" height="20%"><br>
-    <img src="https://github.com/mircolino/shelly/raw/main/garage_door_opener/images/06_relay_on.png" width="20%" height="20%"><br>
-    <img src="https://github.com/mircolino/shelly/raw/main/garage_door_opener/images/07_relay_off.png" width="20%" height="20%">
+    <img src="https://github.com/mircolino/shelly/raw/main/garage_door_opener/images/04_contact_on.png" width="40%" height="40%"><br>
+    <img src="https://github.com/mircolino/shelly/raw/main/garage_door_opener/images/05_contact_off.png" width="40%" height="40%"><br>
+    <img src="https://github.com/mircolino/shelly/raw/main/garage_door_opener/images/06_relay_on.png" width="40%" height="40%"><br>
+    <img src="https://github.com/mircolino/shelly/raw/main/garage_door_opener/images/07_relay_off.png" width="40%" height="40%">
 
 #### Hubitat Website:
 
@@ -54,11 +54,11 @@ However I reversed the Reed switch logic and location so that when the magnet co
 
 2.  Create a new Virtual Device, select type: "Shelly Garage Door Opener" and press &lt;Save Device&gt;:
 
-    <img src="https://github.com/mircolino/shelly/raw/main/garage_door_opener/images/08_new_device.png" width="30%" height="30%">
+    <img src="https://github.com/mircolino/shelly/raw/main/garage_door_opener/images/08_new_device.png" width="50%" height="50%">
 
 3.  Open the "Shelly Garage Door Opener" device page, enter the Shelly switch ip address or hostname, the login credentials (if any) and press &lt;Save Preferences&gt;:
 
-    <img src="https://github.com/mircolino/shelly/raw/main/garage_door_opener/images/09_garage_door_device.png" width="30%" height="30%">
+    <img src="https://github.com/mircolino/shelly/raw/main/garage_door_opener/images/09_garage_door_device.png" width="50%" height="50%">
 
 The Shelly Garage Door Opener and the Hubitat Integration should now be fully operational.
 
