@@ -29,7 +29,9 @@ However I reversed the Reed switch logic and location so that when the magnet co
 
     <img src="https://github.com/mircolino/shelly/raw/main/garage_door_opener/images/01_wiring.png" width="50%" height="50%">
 
-3.  Install the Reed switch in a location where the magnet is in proximity of the switch when the garage door is fully closed.
+3.  Install the Reed switch in a location where the magnet is in proximity of the switch when the garage door is fully closed:
+
+    <img src="https://github.com/mircolino/shelly/raw/main/garage_door_opener/images/01.1_wiring.png" width="50%" height="50%">
 
 #### Shelly Website:
 
