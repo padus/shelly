@@ -15,7 +15,7 @@
  *
  */
 
-public static String version() { return "v1.10.33"; }
+public static String version() { return "v1.11.47"; }
 
 /**
  * Change Log:
@@ -24,6 +24,7 @@ public static String version() { return "v1.10.33"; }
  * 2021.01.10 - Added "opening" and "closing" emulation
  * 2021.01.10 - Changed Reed switch logic from NO to NC
  * 2021.01.11 - Removed double "https//" from importUrl
+ * 2021.01.13 - Added de-bounce code to prevent multiple sequential Reed state change notifications due to oscillation 
  *
  */
 
@@ -58,7 +59,8 @@ metadata {
 /*
  * State variables used by the driver:
  *
- * initialized                  set to true when the device has been succesfully initialized (valid ip/hostname, username, password and channel)
+ * timeStamp                    set to epoch (in milliseconds) when the device has been succesfully initialized (valid ip/hostname, username, password and channel)
+ *                              also used to de-bounce the Reed state change
  *
  */
 
@@ -122,6 +124,13 @@ private Integer logGetLevel() {
   //
   if (settings.logLevel != null) return (settings.logLevel.toInteger());
   return (2);
+}
+
+// -------------------------------------------------------------
+
+private Boolean isDeviceInitialized() {
+
+  return ((state.timeStamp == null)? false: true);
 }
 
 // Logging ---------------------------------------------------------------------------------------------------------------------
@@ -252,14 +261,19 @@ private Boolean shellyRelay(String action) {
 
 // Shelly HTTP callbacks -------------------------------------------------------------------------------------------------------
 
-private void contact(String state) {
+private void contact(String action) {
   //
-  // <state> == "on"  door is open
-  // <state> == "off" door is closed 
+  // <action> == "on"  door is open
+  // <action> == "off" door is closed 
   //
-  logDebug("contact(${state})");
+  logDebug("contact(${action})");
 
-  if (state == "off") {
+  // De-bounce code to prevent multiple sequential Reed state change notifications due to oscillation
+  Long timeNow = now();
+  if ((timeNow - state.timeStamp) < 1000) return;
+  state.timeStamp = timeNow as Long;
+
+  if (action == "off") {
     // Door closed
     attributeSet("contact", "closed");
     attributeSet("door", "closed");
@@ -276,14 +290,14 @@ private void contact(String state) {
 
 // -------------------------------------------------------------
 
-private void relay(String state) {
+private void relay(String action) {
   //
-  // <state> == "on"  relay is on
-  // <state> == "off" relay is off 
+  // <action> == "on"  relay is on
+  // <action> == "off" relay is off 
   //
-  logDebug("relay(${state})");
+  logDebug("relay(${action})");
 
-  if (state == "on" && !isDoorClosed()) {
+  if (action == "on" && !isDoorClosed()) {
 
     // Door closing
     attributeSet("door", "closing");
@@ -298,7 +312,7 @@ private void relay(String state) {
 void open() {
   logDebug("open()");
 
-  if (!state.initialized) logError("Device not initialized");
+  if (!isDeviceInitialized()) logError("Device not initialized");
   else {
     if (!isDoorClosed()) refresh(); 
     else if (shellyRelay("on") == false) logError("Unable to communicate with Shelly device");
@@ -310,7 +324,7 @@ void open() {
 void close() {
   logDebug("close()");
 
-  if (!state.initialized) logError("Device not initialized");
+  if (!isDeviceInitialized()) logError("Device not initialized");
   else {
     if (isDoorClosed()) refresh(); 
     else if (shellyRelay("on") == false) logError("Unable to communicate with Shelly device");
@@ -321,7 +335,7 @@ void close() {
 void refresh() {
   logDebug("refresh()");
 
-  if (!state.initialized) logError("Device not initialized");
+  if (!isDeviceInitialized()) logError("Device not initialized");
   else {
     Map status = shellyStatus();
     if (status == null) logError("Unable to communicate with Shelly device");
@@ -378,8 +392,8 @@ void updated() {
       // Set DNI if different
       if (status.mac != device.getDeviceNetworkId()) device.setDeviceNetworkId(status.mac);
 
-      // Flag the device as properly initialized
-      state.initialized = true;
+      // Save the time the device as been properly initialized
+      state.timeStamp = now() as Long;
     }
   }
   catch (Exception e) {
@@ -410,7 +424,7 @@ void parse(String msg) {
   try {
     logDebug("parse()");
 
-    if (!state.initialized) logError("Device not initialized");
+    if (!isDeviceInitialized()) logError("Device not initialized");
     else {
       // Parse GET/POST message
       Map data = parseLanMessage(msg);
