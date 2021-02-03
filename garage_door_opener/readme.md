@@ -9,6 +9,9 @@
 - No batteries.
 - No tilt sensor false positives.
 - Accurate and reliable operation.
+- Support native Hubitat garage door dashboard template:
+
+  <img src="https://github.com/mircolino/shelly/raw/main/garage_door_opener/images/10_dashboard.png" width="50%" height="50%">
 
 ### Parts
 
