@@ -51,14 +51,14 @@ However I reversed the Reed switch logic and location so that when the magnet co
 
 3.  Add four Hubitat callbacks so that the Shelly switch can notify Hubitat when either the internal relay or the external Reed switch changes state.<br>
     The URLs accept both real IP addresses (for example: http://192.168.32.16:39501/contact/0/on/) or, if you have an internal DNS capable of resolving them, hostnames (for example: http://hubitat1.localdomain.com:39501/contact/0/on/).<br><br>
-    Assuming your Hubitat hub IP address is 192.168.32.16, the URLs should be as follow:<br>
+    Assuming your Hubitat hub IP address is 192.168.32.16, the four URLs should be as follow:<br>
 
     BUTTON SWITCHED ON: http://192.168.32.16:39501/contact/0/on/<br>
     BUTTON SWITCHED OFF: http://192.168.32.16:39501/contact/0/off/<br>
     OUTPUT SWITCHED ON: http://192.168.32.16:39501/relay/0/on/<br>
     OUTPUT SWITCHED OFF: http://192.168.32.16:39501/relay/0/on/<br>
 
-    Note: don't forget to selecte the "Enabled" checkbox before saving each URL:
+    Note: don't forget to select the "Enabled" checkbox before saving each URL:
 
     <img src="https://github.com/mircolino/shelly/raw/main/garage_door_opener/images/04_contact_on.png" width="40%" height="40%"><br>
     <img src="https://github.com/mircolino/shelly/raw/main/garage_door_opener/images/05_contact_off.png" width="40%" height="40%"><br>
