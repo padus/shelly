@@ -41,7 +41,7 @@ However I reversed the Reed switch logic and location so that when the magnet co
 1.  Set the Shelly button type to "detached" so that the internal relay and the external Reed switch will have independent states.<br><br>
     Important:
     - if you are using a NC (Normally Closed) Reed switch, select the "Reverse input" checkbox
-    - if you are using a NO (Normally Open) Reed switch, leave the "Reverse input" checkbox unselected
+    - if you are using a NO (Normally Open) Reed switch, leave the "Reverse input" checkbox unselected<br>
 
     <img src="https://github.com/mircolino/shelly/raw/main/garage_door_opener/images/02_detached.png" width="40%" height="40%">
 
