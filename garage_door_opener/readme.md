@@ -23,7 +23,7 @@
 ### Installation Instructions
 
 This Hubitat integration is based on ["The Hook Up" video tutorial](https://www.youtube.com/watch?v=WEZUxXNiERQ).<br>
-However I reversed the Reed switch logic and location so that when the magnet comes in proximity of the switch, the garage door is 100% closed and not 100% open.
+However I reversed the Reed switch logic so that when **the magnet comes in proximity of the switch, the garage door is 100% closed** and not 100% open.
 
 #### Shelly Switch:
 
