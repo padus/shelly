@@ -1,8 +1,8 @@
 /**
- * Driver:     Shelly Relay & Contact Sensor
+ * Driver:     Shelly Switch
  * Author:     Mirco Caramori
- * Repository: https://github.com/mircolino/shelly/tree/main/relay_contact_sensor
- * Import URL: https://raw.githubusercontent.com/mircolino/shelly/main/relay_contact_sensor/driver.groovy
+ * Repository: https://github.com/mircolino/shelly/tree/main/switch
+ * Import URL: https://raw.githubusercontent.com/mircolino/shelly/main/switch/driver.groovy
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at:
@@ -15,31 +15,27 @@
  *
  */
 
-public static String version() { return "v1.0.3"; }
+public static String version() { return "v1.0.2"; }
 
 /**
  * Change Log:
  *
  * 2021.03.19 - Initial implementation
- *            - Removed channel selection forcing it to 0
  *
  */
 
 // Metadata -------------------------------------------------------------------------------------------------------------------
 
 metadata {
-  definition(name: "Shelly Relay & Contact Sensor", namespace: "mircolino", author: "Mirco Caramori", importUrl: "https://raw.githubusercontent.com/mircolino/shelly/main/relay_contact_sensor/driver.groovy") {
-    capability "Sensor";
+  definition(name: "Shelly Switch", namespace: "mircolino", author: "Mirco Caramori", importUrl: "https://raw.githubusercontent.com/mircolino/shelly/main/switch/driver.groovy") {
     capability "Actuator";
     capability "Switch";
-    capability "Contact Sensor";
     capability "Refresh";
 
     // command "on";
     // command "off";
     // command "refresh";
 
-    // attribute "contact", "string";                              // "closed", "open"
     // attribute "switch", "string";                               // "on", "off"
   }
 
@@ -240,30 +236,6 @@ private Boolean shellyRelay(String action) {
 
 // Shelly HTTP callbacks -------------------------------------------------------------------------------------------------------
 
-private void contact(String action) {
-  //
-  // <action> == "on"  door is open
-  // <action> == "off" door is closed 
-  //
-  logDebug("contact(${action})");
-
-  // De-bounce code to prevent multiple sequential Reed state change notifications due to oscillation
-  Long timeNow = now();
-  if ((timeNow - state.timeStamp) < 1000) return;
-  state.timeStamp = timeNow as Long;
-
-  if (action == "off") {
-    // Contact closed
-    attributeSet("contact", "closed");
-  }
-  else {
-    // Contact open
-    attributeSet("contact", "open");
-  }
-}
-
-// -------------------------------------------------------------
-
 private void relay(String action) {
   //
   // <action> == "on"  relay is on
@@ -312,10 +284,9 @@ void refresh() {
   else {
     Map status = shellyStatus();
     if (status == null) logError("Unable to communicate with Shelly device");
-    else if (status.contact == null || status.relay == null) logError("Invalid Shelly device channel");
+    else if (status.relay == null) logError("Invalid Shelly device channel");
     else {
       // Update device attributes
-      attributeSet("contact", status.contact? "open": "closed");
       attributeSet("switch", status.relay? "on": "off");
     }
   }
@@ -356,10 +327,9 @@ void updated() {
     // Initialize device with new preferences
     Map status = shellyStatus();
     if (status == null) logError("Unable to communicate with Shelly device");
-    else if (status.contact == null || status.relay == null) logError("Invalid Shelly device channel");
+    else if (status.relay == null) logError("Invalid Shelly device channel");
     else {
       // Update device attributes
-      attributeSet("contact", status.contact? "open": "closed");
       attributeSet("switch", status.relay? "on": "off");
 
       // Set DNI if different
@@ -409,7 +379,6 @@ void parse(String msg) {
         token = token[1].tokenize("/"); 
         if (token.size() > 2) {
           // We ignore token[1] (Shelly channel) since we have no child devices
-          if (token[0] == "contact") contact(token[2]);
           if (token[0] == "relay") relay(token[2]);
         }
       }

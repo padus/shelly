@@ -15,7 +15,7 @@
  *
  */
 
-public static String version() { return "v1.11.47"; }
+public static String version() { return "v1.11.48"; }
 
 /**
  * Change Log:
@@ -25,6 +25,7 @@ public static String version() { return "v1.11.47"; }
  * 2021.01.10 - Changed Reed switch logic from NO to NC
  * 2021.01.11 - Removed double "https//" from importUrl
  * 2021.01.13 - Added de-bounce code to prevent multiple sequential Reed state change notifications due to oscillation 
+ * 2021.03.19 - Removed channel selection forcing it to 0 
  *
  */
 
@@ -50,7 +51,7 @@ metadata {
     input(name: "shellyAddress", type: "string", title: "<font style='font-size:12px; color:#1a77c9'>Address</font>", description: "<font style='font-size:12px; font-style: italic'>Shelly IP address or hostname</font>", defaultValue: "", required: true);
     input(name: "shellyUsername", type: "string", title: "<font style='font-size:12px; color:#1a77c9'>Username</font>", description: "<font style='font-size:12px; font-style: italic'>Shelly login username (default: none)</font>", defaultValue: "", required: false);
     input(name: "shellyPassword", type: "password", title: "<font style='font-size:12px; color:#1a77c9'>Password</font>", description: "<font style='font-size:12px; font-style: italic'>Shelly login password (default: none)</font>", defaultValue: "", required: false);
-    input(name: "shellyChannel", type: "number", title: "<font style='font-size:12px; color:#1a77c9'>Channel</font>", description: "<font style='font-size:12px; font-style: italic'>Shelly channel (default: 0)</font>", defaultValue: "0", required: true);
+    // input(name: "shellyChannel", type: "number", title: "<font style='font-size:12px; color:#1a77c9'>Channel</font>", description: "<font style='font-size:12px; font-style: italic'>Shelly channel (default: 0)</font>", defaultValue: "0", required: true);
     input(name: "cycleTime", type: "number", title: "<font style='font-size:12px; color:#1a77c9'>Run Time</font>", description: "<font style='font-size:12px; font-style: italic'>Door open/close time (default: 12 sec)</font>", defaultValue: "12", required: true);
     input(name: "logLevel", type: "enum", title: "<font style='font-size:12px; color:#1a77c9'>Log Verbosity</font>", description: "<font style='font-size:12px; font-style: italic'>Default: 'Debug' for 30 min and 'Info' thereafter</font>", options: [0:"Error", 1:"Warning", 2:"Info", 3:"Debug", 4:"Trace"], multiple: false, defaultValue: 3, required: true);
   }
@@ -93,7 +94,7 @@ private Integer shellyGetChannel() {
   //
   // Return the Shelly switch channel used by the garage door, or 0 if undefined
   //
-  if (settings.shellyChannel != null) return (settings.shellyChannel.toInteger());
+  // if (settings.shellyChannel != null) return (settings.shellyChannel.toInteger());
   return (0);
 }
 
@@ -253,7 +254,7 @@ private Boolean shellyRelay(String action) {
     ok = true;
   }
   catch (Exception e) {
-    logError("Exception in open(${uri}): ${e}");
+    logError("Exception in shellyRelay(${uri}): ${e}");
   }
 
   return (ok);
