@@ -1,8 +1,8 @@
 /**
- * Driver:     Shelly Switch
+ * Driver:     Shelly Detached
  * Author:     Mirco Caramori
- * Repository: https://github.com/mircolino/shelly/tree/main/switch
- * Import URL: https://raw.githubusercontent.com/mircolino/shelly/main/switch/driver.groovy
+ * Repository: https://github.com/mircolino/shelly/tree/main/detached
+ * Import URL: https://raw.githubusercontent.com/mircolino/shelly/main/detached/driver.groovy
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at:
@@ -29,7 +29,9 @@ public static String version() { return "v1.0.4"; }
 // Metadata -------------------------------------------------------------------------------------------------------------------
 
 metadata {
-  definition(name: "Shelly Switch", namespace: "mircolino", author: "Mirco Caramori", importUrl: "https://raw.githubusercontent.com/mircolino/shelly/main/switch/driver.groovy") {
+  definition(name: "Shelly Detached", namespace: "mircolino", author: "Mirco Caramori", importUrl: "https://raw.githubusercontent.com/mircolino/shelly/main/detached/driver.groovy") {
+    capability "Sensor";
+    capability "Contact Sensor";
     capability "Actuator";
     capability "Switch";
     capability "Refresh";
@@ -38,6 +40,7 @@ metadata {
     // command "off";
     // command "refresh";
 
+    // attribute "contact", "string";                              // "closed", "open"
     // attribute "switch", "string";                               // "on", "off"
   }
 
@@ -46,6 +49,7 @@ metadata {
     input(name: "deviceUsername", type: "string", title: "<font style='font-size:12px; color:#1a77c9'>Username</font>", description: "<font style='font-size:12px; font-style: italic'>Shelly login username (default: none)</font>", defaultValue: "", required: false);
     input(name: "devicePassword", type: "password", title: "<font style='font-size:12px; color:#1a77c9'>Password</font>", description: "<font style='font-size:12px; font-style: italic'>Shelly login password (default: none)</font>", defaultValue: "", required: false);
     // input(name: "deviceChannel", type: "number", title: "<font style='font-size:12px; color:#1a77c9'>Channel</font>", description: "<font style='font-size:12px; font-style: italic'>Shelly channel (default: 0)</font>", defaultValue: "0", required: true);
+    input(name: "timeDebounce", type: "number", title: "<font style='font-size:12px; color:#1a77c9'>Debounce</font>", description: "<font style='font-size:12px; font-style: italic'>Milliseconds during which next switch is ignored (default: 0)</font>", defaultValue: "0", required: true);
     input(name: "logLevel", type: "enum", title: "<font style='font-size:12px; color:#1a77c9'>Log Verbosity</font>", description: "<font style='font-size:12px; font-style: italic'>Default: 'Debug' for 30 min and 'Info' thereafter</font>", options: [0:"Error", 1:"Warning", 2:"Info", 3:"Debug", 4:"Trace"], multiple: false, defaultValue: 3, required: true);
   }
 }
@@ -80,6 +84,16 @@ private Integer deviceChannel() {
   // Return the switch channel used by this device object, or 0 if undefined
   //
   // if (settings.deviceChannel != null) return (settings.deviceChannel.toInteger());
+  return (0);
+}
+
+// -------------------------------------------------------------
+
+private Integer timeDebounce() {
+  //
+  // Return the timespan (in milliseconds) within which switching is ignored, or 0 if undefined
+  //
+  if (settings.timeDebounce != null) return (settings.timeDebounce.toInteger());
   return (0);
 }
 
@@ -259,7 +273,32 @@ private void shellyCallbackContact(String channel, String action) {
   // <action> == "on"  contact is closed
   // <action> == "off" contact is open 
   //
-  logInfo("contact(${channel}, ${action})");    
+  Integer val = timeDebounce();
+  if (val) {
+    // Debounce code to prevent multiple sequential Reed state change notifications due to oscillation
+    Long timeNow = now();
+    Long timeMax = state.timeStamp + val;
+    if (timeNow  < timeMax) {
+      val = ((timeMax - timeNow) + 999) / 1000;
+      logInfo("contact(${channel}, ${action}): debounce refresh scheduled in ${val} sec");
+
+      runIn(val, refresh);
+      return;
+    }
+
+    state.timeStamp = timeNow as Long;
+  }
+
+  logInfo("contact(${channel}, ${action})");
+
+  if (action == "off") {
+    // Contact open
+    attributeSet("contact", "open");
+  }
+  else {
+    // Contact closed
+    attributeSet("contact", "closed");
+  }
 }
 
 // -------------------------------------------------------------
@@ -312,9 +351,10 @@ void refresh() {
   else {
     Map status = shellyCommandStatus(deviceAddress(), deviceChannel());
     if (status == null) logError("refresh(): unable to communicate with device");
-    else if (status.relay == null) logError("refresh(): invalid device channel");
+    else if (status.contact == null || status.relay == null) logError("refresh(): invalid device channel");
     else {
       // Update device attributes
+      attributeSet("contact", status.contact? "closed": "open");      
       attributeSet("switch", status.relay? "on": "off");
     }
   }
@@ -355,9 +395,10 @@ void updated() {
     // Initialize device with new preferences
     Map status = shellyCommandStatus(deviceAddress(), deviceChannel());
     if (status == null) logError("updated(): unable to communicate with device");
-    else if (status.relay == null) logError("updated(): invalid device channel");
+    else if (status.contact == null || status.relay == null) logError("updated(): invalid device channel");
     else {
       // Update device attributes
+      attributeSet("contact", status.contact? "closed": "open");      
       attributeSet("switch", status.relay? "on": "off");
 
       // Set DNI if different

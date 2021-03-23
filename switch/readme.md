@@ -1,5 +1,5 @@
 ## Shelly Switch
-*Simple switch driver for Hubitat Elevation without redundant child device*
+*Switch driver for Hubitat Elevation without redundant child device*
 
 ### Features
 
@@ -12,7 +12,7 @@
 
 ### Installation Instructions
 
-Installation is simmilar to the [Shelly Garage Door Opener](https://github.com/mircolino/shelly/tree/main/garage_door_opener#installation-instructions).
+Installation is simmilar to the [Shelly Garage Door Opener](https://github.com/mircolino/shelly/tree/main/garage#installation-instructions).
 
 ### Disclaimer
 

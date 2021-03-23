@@ -1,4 +1,4 @@
-## Shelly Relay & Contact Sensor
+## Shelly Detached
 *Detached Relay and Contact Sensor driver for Hubitat Elevation*
 
 ### Features
@@ -12,7 +12,7 @@
 
 ### Installation Instructions
 
-Installation is simmilar to the [Shelly Garage Door Opener](https://github.com/mircolino/shelly/tree/main/garage_door_opener#installation-instructions).
+Installation is simmilar to the [Shelly Garage Door Opener](https://github.com/mircolino/shelly/tree/main/garage#installation-instructions).
 
 ### Disclaimer
 

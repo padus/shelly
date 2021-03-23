@@ -1,10 +1,10 @@
 ## Shelly Drivers for Hubitat Elevation
 *Miscellaneous Hubitat Elevation drivers using Allterco Shelly devices*
 
-- #### [Garage Door Opener](https://github.com/mircolino/shelly/tree/main/garage_door_opener)
+- #### [Garage Door Opener](https://github.com/mircolino/shelly/tree/main/garage)
   Use a Shelly in detached mode to operate a garage door with a simple Reed contact switch
 
-- #### [Relay & Contact Sensor](https://github.com/mircolino/shelly/tree/main/relay_contact_sensor)
+- #### [Relay & Contact Sensor](https://github.com/mircolino/shelly/tree/main/detached)
   Use a Shelly in detached mode as two independent devices: a switch/relay and a contact sensor
 
 - #### [Switch](https://github.com/mircolino/shelly/tree/main/switch)

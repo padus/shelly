@@ -1,8 +1,8 @@
 /**
  * Driver:     Shelly Garage Door Opener
  * Author:     Mirco Caramori
- * Repository: https://github.com/mircolino/shelly/tree/main/garage_door_opener
- * Import URL: https://raw.githubusercontent.com/mircolino/shelly/main/garage_door_opener/driver.groovy
+ * Repository: https://github.com/mircolino/shelly/tree/main/garage
+ * Import URL: https://raw.githubusercontent.com/mircolino/shelly/main/garage/driver.groovy
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at:
@@ -15,27 +15,27 @@
  *
  */
 
-public static String version() { return "v1.11.48"; }
+public static String version() { return "v1.11.49"; }
 
 /**
  * Change Log:
  *
  * 2021.01.08 - Initial implementation
  * 2021.01.10 - Added "opening" and "closing" emulation
- * 2021.01.10 - Changed Reed switch logic from NO to NC
  * 2021.01.11 - Removed double "https//" from importUrl
  * 2021.01.13 - Added de-bounce code to prevent multiple sequential Reed state change notifications due to oscillation 
  * 2021.03.19 - Removed channel selection forcing it to 0 
+ * 2021.03.23 - Added diagnostic data 
  *
  */
 
 // Metadata -------------------------------------------------------------------------------------------------------------------
 
 metadata {
-  definition(name: "Shelly Garage Door Opener", namespace: "mircolino", author: "Mirco Caramori", importUrl: "https://raw.githubusercontent.com/mircolino/shelly/main/garage_door_opener/driver.groovy") {
+  definition(name: "Shelly Garage Door Opener", namespace: "mircolino", author: "Mirco Caramori", importUrl: "https://raw.githubusercontent.com/mircolino/shelly/main/garage/driver.groovy") {
     capability "Sensor";
-    capability "Actuator";
     capability "Contact Sensor";
+    capability "Actuator";
     capability "Garage Door Control";
     capability "Refresh";
 
@@ -48,11 +48,12 @@ metadata {
   }
 
   preferences {
-    input(name: "shellyAddress", type: "string", title: "<font style='font-size:12px; color:#1a77c9'>Address</font>", description: "<font style='font-size:12px; font-style: italic'>Shelly IP address or hostname</font>", defaultValue: "", required: true);
-    input(name: "shellyUsername", type: "string", title: "<font style='font-size:12px; color:#1a77c9'>Username</font>", description: "<font style='font-size:12px; font-style: italic'>Shelly login username (default: none)</font>", defaultValue: "", required: false);
-    input(name: "shellyPassword", type: "password", title: "<font style='font-size:12px; color:#1a77c9'>Password</font>", description: "<font style='font-size:12px; font-style: italic'>Shelly login password (default: none)</font>", defaultValue: "", required: false);
-    // input(name: "shellyChannel", type: "number", title: "<font style='font-size:12px; color:#1a77c9'>Channel</font>", description: "<font style='font-size:12px; font-style: italic'>Shelly channel (default: 0)</font>", defaultValue: "0", required: true);
-    input(name: "cycleTime", type: "number", title: "<font style='font-size:12px; color:#1a77c9'>Run Time</font>", description: "<font style='font-size:12px; font-style: italic'>Door open/close time (default: 12 sec)</font>", defaultValue: "12", required: true);
+    input(name: "deviceAddress", type: "string", title: "<font style='font-size:12px; color:#1a77c9'>Address</font>", description: "<font style='font-size:12px; font-style: italic'>Shelly IP address or hostname</font>", defaultValue: "", required: true);
+    input(name: "deviceUsername", type: "string", title: "<font style='font-size:12px; color:#1a77c9'>Username</font>", description: "<font style='font-size:12px; font-style: italic'>Shelly login username (default: none)</font>", defaultValue: "", required: false);
+    input(name: "devicePassword", type: "password", title: "<font style='font-size:12px; color:#1a77c9'>Password</font>", description: "<font style='font-size:12px; font-style: italic'>Shelly login password (default: none)</font>", defaultValue: "", required: false);
+    // input(name: "deviceChannel", type: "number", title: "<font style='font-size:12px; color:#1a77c9'>Channel</font>", description: "<font style='font-size:12px; font-style: italic'>Shelly channel (default: 0)</font>", defaultValue: "0", required: true);
+    input(name: "timeDebounce", type: "number", title: "<font style='font-size:12px; color:#1a77c9'>Debounce</font>", description: "<font style='font-size:12px; font-style: italic'>Milliseconds during which next switch is ignored (default: 1000)</font>", defaultValue: "1000", required: true);
+    input(name: "timeCycle", type: "number", title: "<font style='font-size:12px; color:#1a77c9'>Run Time</font>", description: "<font style='font-size:12px; font-style: italic'>Seconds to fully open or close the door (default: 12)</font>", defaultValue: "12", required: true);
     input(name: "logLevel", type: "enum", title: "<font style='font-size:12px; color:#1a77c9'>Log Verbosity</font>", description: "<font style='font-size:12px; font-style: italic'>Default: 'Debug' for 30 min and 'Info' thereafter</font>", options: [0:"Error", 1:"Warning", 2:"Info", 3:"Debug", 4:"Trace"], multiple: false, defaultValue: 3, required: true);
   }
 }
@@ -67,50 +68,52 @@ metadata {
 
 // Preferences -----------------------------------------------------------------------------------------------------------------
 
-private String shellyGetAddress() {
+private String deviceAddress() {
   //
-  // Return the Shelly ip address or hostname, or "" if undefined
+  // Return the device login info and ip address or hostname, or "" if invalid
   //
-  if (settings.shellyAddress != null) return (settings.shellyAddress.toString());
-  return ("");
+  String address = (settings.deviceAddress != null)? settings.deviceAddress.toString(): "";
+  String username = (settings.deviceUsername != null)? settings.deviceUsername.toString(): "";
+  String password = (settings.devicePassword != null)? settings.devicePassword.toString(): "";  
+
+  if (username && password && address) return ("${username}:${password}@${address}");
+
+  return (address);
 }
 
 // -------------------------------------------------------------
 
-private String shellyGetLogin() {
+private Integer deviceChannel() {
   //
-  // Return the Shelly login info, or "" if undefined
+  // Return the switch channel used by this device object, or 0 if undefined
   //
-  String username = (settings.shellyUsername != null)? settings.shellyUsername.toString(): "";
-  String password = (settings.shellyPassword != null)? settings.shellyPassword.toString(): "";  
-
-  if (username && password) return ("${username}:${password}@");
-  return ("");
-}
-
-// -------------------------------------------------------------
-
-private Integer shellyGetChannel() {
-  //
-  // Return the Shelly switch channel used by the garage door, or 0 if undefined
-  //
-  // if (settings.shellyChannel != null) return (settings.shellyChannel.toInteger());
+  // if (settings.deviceChannel != null) return (settings.deviceChannel.toInteger());
   return (0);
 }
 
 // -------------------------------------------------------------
 
-private Integer cycleGetTime() {
+private Integer timeDebounce() {
+  //
+  // Return the timespan (in milliseconds) within which switching is ignored, or 1000 if undefined
+  //
+  if (settings.timeDebounce != null) return (settings.timeDebounce.toInteger());
+  return (1000);
+}
+
+// -------------------------------------------------------------
+
+private Integer timeCycle() {
   //
   // Return the total time in seconds it takes the garage door to fully close or open
   //
-  if (settings.cycleTime != null) return (settings.cycleTime.toInteger());
+  if (settings.timeCycle != null) return (settings.timeCycle.toInteger());
   return (12);
 }
 
 // -------------------------------------------------------------
 
-private Integer logGetLevel() {
+private Integer logLevel() {
   //
   // Get the log level as an Integer:
   //
@@ -118,7 +121,7 @@ private Integer logGetLevel() {
   //   1) log Errors and Warnings
   //   2) log Errors, Warnings and Info
   //   3) log Errors, Warnings, Info and Debug
-  //   4) log Errors, Warnings, Info, Debug and Trace/diagnostic (everything)
+  //   4) log Errors, Warnings, Info, Debug and Trace (everything)
   //
   // If the level is not yet set in the driver preferences, return a default of 2 (Info)
   // Declared public because it's being used by the child-devices as well
@@ -130,40 +133,57 @@ private Integer logGetLevel() {
 // -------------------------------------------------------------
 
 private Boolean isDeviceInitialized() {
-
   return ((state.timeStamp == null)? false: true);
 }
 
 // Logging ---------------------------------------------------------------------------------------------------------------------
+
+private void logError(String str) { log.error(str); }
+private void logWarning(String str) { if (logLevel() > 0) log.warn(str); }
+private void logInfo(String str) { if (logLevel() > 1) log.info(str); }
+private void logDebug(String str) { if (logLevel() > 2) log.debug(str); }
+private void logTrace(String str) { if (logLevel() > 3) log.trace(str); }
+
+// -------------------------------------------------------------
+
+private void logResponse(String id, Object obj) {
+  //
+  // Log a generic groovy object
+  // Used only for diagnostic/debug purposes
+  //
+  if (logLevel() > 3) {
+    String text = id;
+    obj.properties.each {
+      text += "\n${it}";
+    }
+    logTrace(text);
+  }
+}
+
+// -------------------------------------------------------------
+
+private void logData(String id, Map data) {
+  //
+  // Log all data received from the device
+  // Used only for diagnostic/debug purposes
+  //
+  if (logLevel() > 3) {
+    String text = id;    
+    data.each {
+      text += "\n${it.key} = ${it.value}";
+    }
+    logTrace(text);    
+  }
+}
+
+// -------------------------------------------------------------
 
 void logDebugOff() {
   //
   // runIn() callback to disable "Debug" logging after 30 minutes
   // Cannot be private
   //
-  if (logGetLevel() > 2) device.updateSetting("logLevel", [type: "enum", value: "2"]);
-}
-
-// -------------------------------------------------------------
-
-private void logError(String str) { log.error(str); }
-private void logWarning(String str) { if (logGetLevel() > 0) log.warn(str); }
-private void logInfo(String str) { if (logGetLevel() > 1) log.info(str); }
-private void logDebug(String str) { if (logGetLevel() > 2) log.debug(str); }
-private void logTrace(String str) { if (logGetLevel() > 3) log.trace(str); }
-
-// -------------------------------------------------------------
-
-private void logData(Map data) {
-  //
-  // Log all data received from the wifi gateway
-  // Used only for diagnostic/debug purposes
-  //
-  if (logGetLevel() > 3) {
-    data.each {
-      logTrace("$it.key = $it.value");
-    }
-  }
+  if (logLevel() > 2) device.updateSetting("logLevel", [type: "enum", value: "2"]);
 }
 
 // Attribute handling ----------------------------------------------------------------------------------------------------------
@@ -198,9 +218,9 @@ private Boolean isDoorClosed() {
   return ((attributeGet("contact") == "closed")? true: false);
 }
 
-// Shelly HTTP commands --------------------------------------------------------------------------------------------------------
+// Shelly HTTP -----------------------------------------------------------------------------------------------------------------
 
-private Map shellyStatus() {
+private Map shellyCommandStatus(String address, Integer channel) {
   //
   // Return null if error or a map of parameters:
   //
@@ -211,27 +231,29 @@ private Map shellyStatus() {
   //
   Map status = null;
   
-  String uri = "http://${shellyGetLogin()}${shellyGetAddress()}/status";
+  String uri = "http://${address}/status";
 
   try {
     httpGet(uri) { /* groovyx.net.http.HttpResponseDecorator */ resp ->
-      if (resp.data) {
-        Integer channel = shellyGetChannel();
-        status = [:];
+      // If debug is enabled, log the response received from the device
+      logResponse("status(${uri})", resp);
 
-        status.ip = resp.data.wifi_sta.ip;
-        status.mac = resp.data.mac;
+      if ((resp.status as Integer) != 200) throw new Exception("http status = ${resp.status}")
 
-        if (resp.data.relays && resp.data.relays.size() > channel) status.relay = (resp.data.relays[channel].ison as Boolean)? 1: 0;
-        else status.relay = null;
+      status = [:];
 
-        if (resp.data.inputs && resp.data.inputs.size() > channel) status.contact = (resp.data.inputs[channel].input as Integer)? 1: 0;
-        else status.contact = null;
-      }  
+      status.ip = resp.data.wifi_sta.ip;
+      status.mac = resp.data.mac;
+
+      if (resp.data.relays && resp.data.relays.size() > channel) status.relay = (resp.data.relays[channel].ison as Boolean)? 1: 0;
+      else status.relay = null;
+
+      if (resp.data.inputs && resp.data.inputs.size() > channel) status.contact = (resp.data.inputs[channel].input as Integer)? 1: 0;
+      else status.contact = null;
     }
   }
   catch (Exception e) {
-    logError("Exception in shellyStatus(${uri}): ${e}");
+    logError("status(${uri}): ${e}");
   }
 
   return (status);
@@ -239,7 +261,7 @@ private Map shellyStatus() {
 
 // -------------------------------------------------------------
 
-private Boolean shellyRelay(String action) {
+private Boolean shellyCommandRelay(String address, Integer channel, String action) {
   //
   // <action> == "on"  switch relay on
   // <action> == "off" switch relay off
@@ -247,33 +269,49 @@ private Boolean shellyRelay(String action) {
   //
   Boolean ok = false;
 
-  String uri = "http://${shellyGetLogin()}${shellyGetAddress()}/relay/${shellyGetChannel()}?turn=${action}";
+  String uri = "http://${address}/relay/${channel}?turn=${action}";
 
   try {
-    httpPost(uri, "") {}
-    ok = true;
+    httpPost(uri, "") { /* groovyx.net.http.HttpResponseDecorator */ resp ->
+      // If debug is enabled, log the response received from the device
+      logResponse("relay(${uri})", resp);
+
+      if ((resp.status as Integer) != 200) throw new Exception("http status = ${resp.status}")
+      ok = true;
+    }
   }
   catch (Exception e) {
-    logError("Exception in shellyRelay(${uri}): ${e}");
+    logError("relay(${uri}): ${e}");
   }
 
   return (ok);
 }
 
-// Shelly HTTP callbacks -------------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------
 
-private void contact(String action) {
+private void shellyCallbackContact(String channel, String action) {
   //
   // <action> == "on"  door is open
   // <action> == "off" door is closed 
   //
-  logDebug("contact(${action})");
+  Integer val = timeDebounce();
+  if (val) {
+    // Debounce code to prevent multiple sequential Reed state change notifications due to oscillation
+    Long timeNow = now();
+    Long timeMax = state.timeStamp + val;
+    if (timeNow  < timeMax) {
+      val = ((timeMax - timeNow) + 999) / 1000;
+      logInfo("contact(${channel}, ${action}): debounce refresh scheduled in ${val} sec");
 
-  // De-bounce code to prevent multiple sequential Reed state change notifications due to oscillation
-  Long timeNow = now();
-  if ((timeNow - state.timeStamp) < 1000) return;
-  state.timeStamp = timeNow as Long;
+      runIn(val, refresh);
+      return;
+    }
 
+    state.timeStamp = timeNow as Long;
+  }
+
+  logInfo("contact(${channel}, ${action})");
+  
   if (action == "off") {
     // Door closed
     attributeSet("contact", "closed");
@@ -285,62 +323,61 @@ private void contact(String action) {
     attributeSet("door", "opening");
 
     // Wait for the door to open and update its state
-    runIn(cycleGetTime(), refresh);
+    runIn(timeCycle(), refresh);
   }
 }
 
 // -------------------------------------------------------------
 
-private void relay(String action) {
+private void shellyCallbackRelay(String channel, String action) {
   //
   // <action> == "on"  relay is on
   // <action> == "off" relay is off 
   //
-  logDebug("relay(${action})");
+  logInfo("relay(${channel}, ${action})");
 
   if (action == "on" && !isDoorClosed()) {
-
     // Door closing
     attributeSet("door", "closing");
 
     // Wait for the door to close and update its state
-    runIn(cycleGetTime(), refresh);
+    runIn(timeCycle(), refresh);
   }
 }
 
 // Commands --------------------------------------------------------------------------------------------------------------------
 
 void open() {
-  logDebug("open()");
+  logInfo("open()");
 
-  if (!isDeviceInitialized()) logError("Device not initialized");
+  if (!isDeviceInitialized()) logError("open(): device not initialized");
   else {
     if (!isDoorClosed()) refresh(); 
-    else if (shellyRelay("on") == false) logError("Unable to communicate with Shelly device");
+    else if (shellyCommandRelay(deviceAddress(), deviceChannel(), "on") == false) logError("open(): unable to communicate with device");
   }
 }
 
 // -------------------------------------------------------------
 
 void close() {
-  logDebug("close()");
+  logInfo("close()");
 
-  if (!isDeviceInitialized()) logError("Device not initialized");
+  if (!isDeviceInitialized()) logError("close(): device not initialized");
   else {
     if (isDoorClosed()) refresh(); 
-    else if (shellyRelay("on") == false) logError("Unable to communicate with Shelly device");
+    else if (shellyCommandRelay(deviceAddress(), deviceChannel(), "on") == false) logError("close(): unable to communicate with device");
   }
 }
 
 // -------------------------------------------------------------
 void refresh() {
-  logDebug("refresh()");
+  logInfo("refresh()");
 
-  if (!isDeviceInitialized()) logError("Device not initialized");
+  if (!isDeviceInitialized()) logError("refresh(): device not initialized");
   else {
-    Map status = shellyStatus();
-    if (status == null) logError("Unable to communicate with Shelly device");
-    else if (status.contact == null) logError("Invalid Shelly device channel");
+    Map status = shellyCommandStatus(deviceAddress(), deviceChannel());
+    if (status == null) logError("refresh(): unable to communicate with device");
+    else if (status.contact == null) logError("refresh(): invalid device channel");
     else {
       // Update device attributes
       attributeSet("contact", status.contact? "open": "closed");
@@ -359,7 +396,7 @@ void installed() {
     logDebug("installed()");
   }
   catch (Exception e) {
-    logError("Exception in installed(): ${e}");
+    logError("installed(): ${e}");
   }
 }
 
@@ -379,12 +416,12 @@ void updated() {
     unschedule();
 
     // Turn off debug log in 30 minutes
-    if (logGetLevel() > 2) runIn(1800, logDebugOff);
+    if (logLevel() > 2) runIn(1800, logDebugOff);
 
     // Initialize device with new preferences
-    Map status = shellyStatus();
-    if (status == null) logError("Unable to communicate with Shelly device");
-    else if (status.contact == null) logError("Invalid Shelly device channel");
+    Map status = shellyCommandStatus(deviceAddress(), deviceChannel());;
+    if (status == null) logError("updated(): unable to communicate with device");
+    else if (status.contact == null) logError("updated(): invalid device channel");
     else {
       // Update device attributes
       attributeSet("contact", status.contact? "open": "closed");
@@ -398,7 +435,7 @@ void updated() {
     }
   }
   catch (Exception e) {
-    logError("Exception in updated(): ${e}");
+    logError("updated(): ${e}");
   }
 }
 
@@ -412,7 +449,7 @@ void uninstalled() {
     logDebug("uninstalled()");
   }
   catch (Exception e) {
-    logError("Exception in uninstalled(): ${e}");
+    logError("uninstalled(): ${e}");
   }
 }
 
@@ -423,28 +460,25 @@ void parse(String msg) {
   // Called everytime a GET/POST message is received from the WiFi Gateway
   //
   try {
-    logDebug("parse()");
+    // Parse GET/POST message
+    Map data = parseLanMessage(msg);
 
-    if (!isDeviceInitialized()) logError("Device not initialized");
-    else {
-      // Parse GET/POST message
-      Map data = parseLanMessage(msg);
+    // Log raw data received from the device if trace is enabled
+    logData("parse()", data);
 
-      // Process the header and extract parameters from URL
-      String header = data["header"];   
-      List<String> token = header.tokenize(" ");
-      if (token.size() > 1) {
-        token = token[1].tokenize("/"); 
-        if (token.size() > 2) {
-          // We ignore token[1] (Shelly channel) since we have no child devices
-          if (token[0] == "contact") contact(token[2]);
-          if (token[0] == "relay") relay(token[2]);
-        }
+    // Process the header and extract parameters from URL
+    String header = data["header"];   
+    List<String> token = header.tokenize(" ");
+    if (token.size() > 1) {
+      token = token[1].tokenize("/"); 
+      if (token.size() > 2) {
+        if (token[0] == "contact") shellyCallbackContact(token[1], token[2]);
+        if (token[0] == "relay") shellyCallbackRelay(token[1], token[2]);    
       }
     }
   }
   catch (Exception e) {
-    logError("Exception in parse(): ${e}");
+    logError("parse(): ${e}");
   }
 }
 
