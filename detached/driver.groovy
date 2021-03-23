@@ -278,7 +278,7 @@ private void shellyCallbackContact(String channel, String action) {
     // Debounce code to prevent multiple sequential Reed state change notifications due to oscillation
     Long timeNow = now();
     Long timeMax = state.timeStamp + val;
-    if (timeNow  < timeMax) {
+    if (timeNow < timeMax) {
       val = ((timeMax - timeNow) + 999) / 1000;
       logInfo("contact(${channel}, ${action}): debounce refresh scheduled in ${val} sec");
 

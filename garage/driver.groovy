@@ -15,7 +15,7 @@
  *
  */
 
-public static String version() { return "v1.11.49"; }
+public static String version() { return "v1.11.50"; }
 
 /**
  * Change Log:
@@ -299,11 +299,10 @@ private void shellyCallbackContact(String channel, String action) {
     // Debounce code to prevent multiple sequential Reed state change notifications due to oscillation
     Long timeNow = now();
     Long timeMax = state.timeStamp + val;
-    if (timeNow  < timeMax) {
-      val = ((timeMax - timeNow) + 999) / 1000;
-      logInfo("contact(${channel}, ${action}): debounce refresh scheduled in ${val} sec");
+    if (timeNow < timeMax) {
+      val = timeNow - state.timeStamp;
+      logInfo("contact(${channel}, ${action}): debounce after ${val} msec");
 
-      runIn(val, refresh);
       return;
     }
 
