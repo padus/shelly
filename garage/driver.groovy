@@ -1,8 +1,8 @@
 /**
  * Driver:     Shelly Garage Door Opener
  * Author:     Mirco Caramori
- * Repository: https://github.com/mircolino/shelly/tree/main/garage
- * Import URL: https://raw.githubusercontent.com/mircolino/shelly/main/garage/driver.groovy
+ * Repository: https://github.com/padus/shelly/tree/main/garage
+ * Import URL: https://raw.githubusercontent.com/padus/shelly/main/garage/driver.groovy
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at:
@@ -15,7 +15,7 @@
  *
  */
 
-public static String version() { return "v1.11.50"; }
+public static String version() { return "v1.11.51"; }
 
 /**
  * Change Log:
@@ -25,14 +25,15 @@ public static String version() { return "v1.11.50"; }
  * 2021.01.11 - Removed double "https//" from importUrl
  * 2021.01.13 - Added de-bounce code to prevent multiple sequential Reed state change notifications due to oscillation 
  * 2021.03.19 - Removed channel selection forcing it to 0 
- * 2021.03.23 - Added diagnostic data 
+ * 2021.03.23 - Added diagnostic data
+ * 2021.08.18 - Relocated repository: mircolino -> padus
  *
  */
 
 // Metadata -------------------------------------------------------------------------------------------------------------------
 
 metadata {
-  definition(name: "Shelly Garage Door Opener", namespace: "mircolino", author: "Mirco Caramori", importUrl: "https://raw.githubusercontent.com/mircolino/shelly/main/garage/driver.groovy") {
+  definition(name: "Shelly Garage Door Opener", namespace: "mircolino", author: "Mirco Caramori", importUrl: "https://raw.githubusercontent.com/padus/shelly/main/garage/driver.groovy") {
     capability "Sensor";
     capability "Contact Sensor";
     capability "Actuator";

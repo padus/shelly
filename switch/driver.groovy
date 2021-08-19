@@ -1,8 +1,8 @@
 /**
  * Driver:     Shelly Switch
  * Author:     Mirco Caramori
- * Repository: https://github.com/mircolino/shelly/tree/main/switch
- * Import URL: https://raw.githubusercontent.com/mircolino/shelly/main/switch/driver.groovy
+ * Repository: https://github.com/padus/shelly/tree/main/switch
+ * Import URL: https://raw.githubusercontent.com/padus/shelly/main/switch/driver.groovy
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at:
@@ -15,7 +15,7 @@
  *
  */
 
-public static String version() { return "v1.0.4"; }
+public static String version() { return "v1.0.5"; }
 
 /**
  * Change Log:
@@ -23,13 +23,14 @@ public static String version() { return "v1.0.4"; }
  * 2021.03.19 - Initial implementation
  *            - Removed channel selection forcing it to 0
  * 2021.03.22 - Added diagnostic data
+ * 2021.08.18 - Relocated repository: mircolino -> padus 
  *
  */
 
 // Metadata -------------------------------------------------------------------------------------------------------------------
 
 metadata {
-  definition(name: "Shelly Switch", namespace: "mircolino", author: "Mirco Caramori", importUrl: "https://raw.githubusercontent.com/mircolino/shelly/main/switch/driver.groovy") {
+  definition(name: "Shelly Switch", namespace: "mircolino", author: "Mirco Caramori", importUrl: "https://raw.githubusercontent.com/padus/shelly/main/switch/driver.groovy") {
     capability "Actuator";
     capability "Switch";
     capability "Refresh";

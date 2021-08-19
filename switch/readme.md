@@ -12,7 +12,7 @@
 
 ### Installation Instructions
 
-Installation is simmilar to the [Shelly Garage Door Opener](https://github.com/mircolino/shelly/tree/main/garage#installation-instructions).
+Installation is simmilar to the [Shelly Garage Door Opener](https://github.com/padus/shelly/tree/main/garage#installation-instructions).
 
 ### Disclaimer
 
